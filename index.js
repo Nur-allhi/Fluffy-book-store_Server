@@ -1,29 +1,30 @@
 const express = require("express");
 const cors = require("cors");
-const admin = require("firebase-admin");
 const MongoClient = require("mongodb").MongoClient;
 
+const admin = require("firebase-admin");
+
 require("dotenv").config();
-const port = process.env.PORT || 5000;
 
 const dataBaseUser = process.env.DB_USER;
 const dataBasePass = process.env.DB_PASS;
 const dataBaseName = process.env.DB_NAME;
+
 const uri = `mongodb+srv://${dataBaseUser}:${dataBasePass}@cluster0.ya1bp.mongodb.net/${dataBaseName}?retryWrites=true&w=majority`;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
 // Firebase admin:
 var serviceAccount = require("./Configs/fluffy-book-store-firebase-adminsdk-h9zah-8a4cdd2367.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-});
-
-const client = new MongoClient(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
 });
 
 client.connect((err) => {
@@ -93,4 +94,4 @@ app.get("/", (req, res) => {
   res.send("Server Home");
 });
 
-app.listen(port);
+app.listen(process.env.PORT || 5000);
