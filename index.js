@@ -3,16 +3,20 @@ const cors = require("cors");
 const admin = require("firebase-admin");
 const MongoClient = require("mongodb").MongoClient;
 
-const port = process.env.PORT || 5000;
 require("dotenv").config();
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ya1bp.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
+const port = process.env.PORT || 5000;
+
+const dataBaseUser = process.env.DB_USER;
+const dataBasePass = process.env.DB_PASS;
+const dataBaseName = process.env.DB_NAME;
+const uri = `mongodb+srv://${dataBaseUser}:${dataBasePass}@cluster0.ya1bp.mongodb.net/${dataBaseName}?retryWrites=true&w=majority`;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Firebase admin:
 var serviceAccount = require("./Configs/fluffy-book-store-firebase-adminsdk-h9zah-8a4cdd2367.json");
-
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -23,7 +27,7 @@ const client = new MongoClient(uri, {
 });
 
 client.connect((err) => {
-  const booksDataBase = client.db(`${process.env.DB_NAME}`).collection("books");
+  const booksDataBase = client.db(`${dataBaseName}`).collection("books");
 
   // Get all the books for home
   app.get("/books", (req, res) => {
@@ -90,6 +94,3 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port);
-
-// server online link
-// https://fluffy-book-store-server.herokuapp.com/
