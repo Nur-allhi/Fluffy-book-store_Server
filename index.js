@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 });
 
 // Firebase admin:
-var serviceAccount = require("./Configs/fluffy-book-store-firebase-adminsdk-h9zah-8a4cdd2367.json");
+var serviceAccount = require("./fluffy-book-store-firebase-adminsdk-h9zah-8a4cdd2367.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
