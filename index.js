@@ -1,21 +1,36 @@
 const express = require("express");
 const cors = require("cors");
+const admin = require("firebase-admin");
 const MongoClient = require("mongodb").MongoClient;
-const port = process.env.PORT || 5000;
 
-const uri =
-  "mongodb+srv://fluffystore:usWUMaeB15qvXmrF@cluster0.ya1bp.mongodb.net/fluffy-book-store?retryWrites=true&w=majority";
+const port = process.env.PORT || 5000;
+require("dotenv").config();
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ya1bp.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+var serviceAccount = require("./Configs/fluffy-book-store-firebase-adminsdk-h9zah-8a4cdd2367.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
 client.connect((err) => {
-  const booksDataBase = client.db("fluffy-book-store").collection("books");
+  const booksDataBase = client.db(`${process.env.DB_NAME}`).collection("books");
+
+  // Get all the books for home
+  app.get("/books", (req, res) => {
+    booksDataBase.find().toArray((err, books) => {
+      res.send(books);
+    });
+  });
 
   // Add books :
   app.post("/addBook", (req, res) => {
@@ -26,10 +41,47 @@ client.connect((err) => {
     });
   });
 
-  app.get("/books", (req, res) => {
-    booksDataBase.find().toArray((err, books) => {
-      res.send(books);
+  // Send order data to server:
+  const orderDataBase = client.db("fluffy-book-store").collection("orders");
+  app.post("/getOrder", (req, res) => {
+    const orderData = req.body;
+    console.log(orderData);
+    orderDataBase.insertOne(orderData).then((result) => {
+      res.send(result.insertOne > 0);
     });
+  });
+
+  //
+  app.get("/previousOrders", (req, res) => {
+    const bearer = req.headers.authorization;
+    if (bearer && bearer.startsWith("Bearer ")) {
+      const idToken = bearer.split(" ")[1];
+      admin
+        .auth()
+        .verifyIdToken(idToken)
+        .then((decodedToken) => {
+          const tokenEmail = decodedToken.email;
+          if (tokenEmail == req.query.email) {
+            orderDataBase
+              .find({ email: req.query.email })
+              .toArray((err, orders) => {
+                res.send(orders);
+              });
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    } else {
+      res.status(401).send("Unauthorized Access");
+    }
+  });
+
+  // Delete book from Database:
+
+  app.delete("/deleteBook/:id", (req, res) => {
+    const bookData = req.params.id;
+    console.log(bookData);
   });
 });
 
@@ -38,3 +90,6 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port);
+
+// server online link
+// https://fluffy-book-store-server.herokuapp.com/
