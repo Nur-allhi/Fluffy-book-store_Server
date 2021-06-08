@@ -37,7 +37,7 @@ var serviceAccount = {
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
-
+console.log(process.env.CLIENT_X509_CERT_URL);
 client.connect((err) => {
   const booksDataBase = client.db(`${dataBaseName}`).collection("books");
 
